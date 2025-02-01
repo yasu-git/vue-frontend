@@ -12,16 +12,19 @@
 			<!-- email -->
 			<div>
 				<label for="email">Email:</label><br />
-				<input type="email" id="email" v-model="formData.email" required /><br /><br />
+				<input type="email" id="email" v-model.trim="formData.email" required /><br /><br />
 			</div>
 
 			<!-- tell -->
 			<div>
 				<label for="tel">tel:</label><br />
-				<input type="tel" id="tel" v-model="formData.tel" required/><br /><br />
+				<input type="tel" id="tel" v-model.trim="formData.tel" required/><br /><br />
 			</div>
 
-			<button type="submit">Submit</button>
+			<!-- 送信中は押せないようにする-->
+			<button type="submit" :disabled="isLoading">
+				{{isLoading ? 'Loading...' : 'Submit'}}
+			</button>
 		</form>
 		<p v-if="responseMessage">{{ responseMessage }}</p>
 	</div>
@@ -38,6 +41,7 @@ export default {
 				tel: '',
 			},
 			responseMessage: '',
+			isLoading: false,//送信中かどうかを示すフラグ
 			apiUrl: process.env.VUE_APP_API_URL || 'http://localhost:3000',// バックエンドのエンドポイント
 
 		};
@@ -46,6 +50,8 @@ export default {
 	methods: {
 		async submitForm() {
 			console.log("Sending data:", JSON.parse(JSON.stringify(this.formData)));
+			this.isLoading = true;//送信中フラグをtrueに設定
+			this.responseMessage = '';//responseMessageを空に設定
 
 			try {
 				//api/formへPOSTリクエストを送信
@@ -58,6 +64,11 @@ export default {
 					//formDataオブジェクトをJSON文字列に変換してリクエストボディに設定
 					body: JSON.stringify(this.formData),
 				});
+
+				if(!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.message || 'Server Error');
+				}
 
 				//レスポンスをJSON形式で取得
 				const result = await response.json();
@@ -77,6 +88,8 @@ export default {
 			} catch (error) {//エラーが発生した場合の処理
 				console.error('Error:', error);
 				this.responseMessage = 'An error occurred.';
+			}finally {
+				this.isLoading = false;//送信中フラグをfalseに設定
 			}
 		},
 	}
