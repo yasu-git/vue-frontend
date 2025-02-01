@@ -38,6 +38,8 @@ export default {
 				tel: '',
 			},
 			responseMessage: '',
+			apiUrl: process.env.VUE_APP_API_URL || 'http://localhost:3000',// バックエンドのエンドポイント
+
 		};
 	},
 	//methodsオブジェクトにsubmitFormメソッドを追加
@@ -47,7 +49,7 @@ export default {
 
 			try {
 				//api/formへPOSTリクエストを送信
-				const response = await fetch('http://localhost:3000/form', {
+				const response = await fetch(`${this.apiUrl}/api/form`, {
 					method: 'POST',//POSTリクエスト
 					//Content-Typeヘッダーをapplication/jsonに設定
 					headers: {

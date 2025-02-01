@@ -33,11 +33,15 @@ export default {
 		return {
 			message: "User List",// メッセージ
 			users: [], // データ格納用
+			apiUrl: process.env.VUE_APP_API_URL || 'http://localhost:3000',// バックエンドのエンドポイント
 		};
 	},
 	mounted() {
-		// バックエンドのエンドポイント
-		const backendEndpoint = `${process.env.VITE_API_URL}/notes_from_b`;
+		/* バックエンドのエンドポイント
+		フロントエンドはimport.meta.env.と記述することで、.envファイルの内容を参照できる
+		*/
+
+		const backendEndpoint = `${this.apiUrl}/api/notes_from_b`;
 
 		// Axiosでバックエンドからデータを取得
 		axios
