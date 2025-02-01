@@ -16,7 +16,7 @@
 				<tr v-for="(user, index) in users" :key="user.userId">
 					<td>{{ index + 1 }}</td>
 					<td>{{ user.name || "N/A"}}</td>
-					<td>{{ user.mail || "N/A"}}</td>
+					<td>{{ user.email || "N/A"}}</td>
 					<td>{{ user.tel || "N/A"}}</td>
 				</tr>
 			</tbody>
@@ -40,18 +40,15 @@ export default {
 		/* バックエンドのエンドポイント
 		フロントエンドはimport.meta.env.と記述することで、.envファイルの内容を参照できる
 		*/
-
-		const backendEndpoint = `${this.apiUrl}/api/notes_from_b`;
-
 		// Axiosでバックエンドからデータを取得
 		axios
-			.get(backendEndpoint)			// バックエンドのエンドポイントを指定
+			.get(`${this.apiUrl}/api/notes_from_b`)			// バックエンドのエンドポイントを指定
 			.then((response) => {			// データの取得に成功した場合
 				this.users = response.data.map(
 					user => ({
 						id: user.id,
 						name: user.name,
-						mail: user.mail,
+						email: user.email,
 						tel: user.tel,
 					})
 				); // データをセット

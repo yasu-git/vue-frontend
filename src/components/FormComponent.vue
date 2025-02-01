@@ -65,6 +65,12 @@ export default {
 				//resultオブジェクトのsuccessプロパティによってメッセージを設定
 				if (result.success) {
 					this.responseMessage = 'Form submitted successfully!';
+					//送信後にフォームをリセット
+					this.formData = {
+						name: '',
+						email: '',
+						tel: '',
+					};
 				} else {
 					this.responseMessage = 'Failed to submit form.';
 				}
