@@ -1,35 +1,3 @@
-<template>
-	<div class="container">
-		<h1>Form Submission</h1>
-		<form @submit.prevent="submitForm">
-			<!-- name, email, tellの入力フォーム -->
-			<!-- name -->
-			<div>
-				<label for="name">Name:</label><br />
-				<input type="text" id="name" v-model="formData.name" required /><br /><br />
-			</div>
-
-			<!-- email -->
-			<div>
-				<label for="email">Email:</label><br />
-				<input type="email" id="email" v-model.trim="formData.email" required /><br /><br />
-			</div>
-
-			<!-- tell -->
-			<div>
-				<label for="tel">tel:</label><br />
-				<input type="tel" id="tel" v-model.trim="formData.tel" required/><br /><br />
-			</div>
-
-			<!-- 送信中は押せないようにする-->
-			<button type="submit" :disabled="isLoading">
-				{{isLoading ? 'Loading...' : 'Submit'}}
-			</button>
-		</form>
-		<p v-if="responseMessage">{{ responseMessage }}</p>
-	</div>
-</template>
-
 <script>
 export default {
 	//dataオブジェクトにformDataとresponseMessageプロパティを追加
@@ -45,6 +13,12 @@ export default {
 			apiUrl: process.env.VUE_APP_API_URL || 'http://localhost:3000',// バックエンドのエンドポイント
 
 		};
+	},
+	computed: {
+		//isLoadingプロパティに応じてボタンの表示を変更
+		nowLoading() {
+			return this.isLoading ? 'Loading...' : 'Submit';
+		},
 	},
 	//methodsオブジェクトにsubmitFormメソッドを追加
 	methods: {
@@ -76,6 +50,9 @@ export default {
 				//resultオブジェクトのsuccessプロパティによってメッセージを設定
 				if (result.success) {
 					this.responseMessage = 'Form submitted successfully!';
+
+					//App.vueのhandleUserAddedメソッドを呼び出す
+					this.$emit('user-added');//user-addedイベントを発生させる
 					//送信後にフォームをリセット
 					this.formData = {
 						name: '',
@@ -95,3 +72,35 @@ export default {
 	}
 };
 </script>
+
+<template>
+	<div class="container">
+		<h1>Form Submission</h1>
+		<form @submit.prevent="submitForm">
+			<!-- name, email, tellの入力フォーム -->
+			<!-- name -->
+			<div>
+				<label for="name">Name:</label><br />
+				<input type="text" id="name" v-model="formData.name" required /><br /><br />
+			</div>
+
+			<!-- email -->
+			<div>
+				<label for="email">Email:</label><br />
+				<input type="email" id="email" v-model.trim="formData.email" required /><br /><br />
+			</div>
+
+			<!-- tell -->
+			<div>
+				<label for="tel">tel:</label><br />
+				<input type="tel" id="tel" v-model.trim="formData.tel" required/><br /><br />
+			</div>
+
+			<!-- 送信中は押せないようにする-->
+			<button type="submit" :disabled="isLoading">
+				{{nowLoading}}
+			</button>
+		</form>
+		<p v-if="responseMessage">{{ responseMessage }}</p>
+	</div>
+</template>

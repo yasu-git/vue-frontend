@@ -1,7 +1,7 @@
 <template>
 	<div id="app">
-		<FormComponent />
-		<UserListComponent />
+		<FormComponent @user-added="handleUserAdded"/>
+		<UserListComponent ref="userList"/>
 	</div>
 </template>
 
@@ -14,6 +14,12 @@ export default {
 	components: {
 		FormComponent,
 		UserListComponent
+	},
+	methods:{
+		// ユーザー追加時の処理
+		handleUserAdded(){
+			this.$refs.userList.fetchUsers();
+		}
 	}
 };
 </script>

@@ -8,34 +8,36 @@
 			<p>Loading...</p>
 		</div>
 
-		<!-- データ取得後の表示 -->
-		<div v-else>
+		<!-- エラー発生時の表示 -->
+		<div v-if="errorMessage" class="alert alert-danger">
+			{{ errorMessage }}
+		</div>
 
-			<table class="table">
-				<thead class="thead-dark">
-					<tr>
-						<th>連番</th>
-						<th>Name</th>
-						<th>Mail</th>
-						<th>Tel</th>
-					</tr>
-				</thead>
-				<!-- データを表示する部分 -->
-				<tbody>
-					<tr v-for="(user, index) in users" :key="user.Id">
-						<td>{{ index + 1 }}</td>
-						<td>{{ user.name || "N/A" }}</td>
-						<td>{{ user.email || "N/A" }}</td>
-						<td>{{ user.tel || "N/A" }}</td>
-					</tr>
-				</tbody>
-			</table>
-			<!-- エラー発生時の表示 -->
-			<div v-if="error" class="alert alert-danger" role="alert">
-				{{ error }}
-			</div>
+		<table class="table" v-if="!isLoading && users.length">
+			<thead class="thead-dark">
+				<tr>
+					<th>連番</th>
+					<th>Name</th>
+					<th>Mail</th>
+					<th>Tel</th>
+				</tr>
+			</thead>
+			<!-- データを表示する部分 -->
+			<tbody>
+				<tr v-for="(user, index) in users" :key="user.Id">
+					<td>{{ index + 1 }}</td>
+					<td>{{ user.name || "N/A" }}</td>
+					<td>{{ user.email || "N/A" }}</td>
+					<td>{{ user.tel || "N/A" }}</td>
+				</tr>
+			</tbody>
+		</table>
+		<!-- エラー発生時の表示 -->
+		<div v-if="error" class="alert alert-danger" role="alert">
+			{{ error }}
 		</div>
 	</div>
+
 </template>
 
 <script>
