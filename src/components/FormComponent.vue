@@ -4,7 +4,7 @@
 
 import { reactive, ref, computed } from 'vue';
 //validationを追加
-import { required, email, numeric, minLength } from '@vuelidate/validators';
+import { required, email, numeric, minLength, helpers } from '@vuelidate/validators';
 import { useVuelidate } from '@vuelidate/core';
 
 //イベントを親コンポーネントへ発火するために、emitを追加
@@ -41,16 +41,21 @@ formDate{
 */
 const rules = {
 	name: {
-		required
+		/*
+		helpers.withMessageでエラーメッセージをカスタマイズ
+		エラーメッセージをカスタマイズする場合は、エラーメッセージを第二引数に追加する
+		必要なければ、requiredのみ記述する
+		*/
+		required: helpers.withMessage('名前は必須です.', required),
 	},
 	email: {
-		required,
-		email
+		required: helpers.withMessage('emailは必須です.', required),
+		email: helpers.withMessage('正しいメールアドレスを入力してください。.', email),
 	},
 	tel: {
-		required,
-		minLength: minLength(10),
-		numeric,
+		required: helpers.withMessage('名前は必須です.', required),
+		minLength: helpers.withMessage('電話番号は１０桁以上で入力してください。', minLength(10)),
+		numeric: helpers.withMessage('数字のみ入力してください.', numeric),
 	},
 };
 
