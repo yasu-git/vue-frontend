@@ -53,7 +53,7 @@ const rules = {
 		email: helpers.withMessage('正しいメールアドレスを入力してください。.', email),
 	},
 	tel: {
-		required: helpers.withMessage('名前は必須です.', required),
+		required: helpers.withMessage('電話番号は必須です.', required),
 		minLength: helpers.withMessage('電話番号は１０桁以上で入力してください。', minLength(10)),
 		numeric: helpers.withMessage('数字のみ入力してください.', numeric),
 	},
@@ -128,9 +128,12 @@ async function submitForm() {
 				<label for="name">Name:</label><br />
 				<input type="text" id="name" v-model="formData.name" /><br />
 				<!-- バリデーションエラー表示 -->
-				<div class="input=errors" v-for="error of v$.name.$errors" :key="error.$uid">
-					<div class="error-msg">{{ error.$message }}</div>
+				<div v-if="v$.name.$error">
+					<div class="input=errors" v-for="error in v$.name.$errors" :key="error.$uid">
+						<span class="error-msg">{{ error.$message }}</span>
+					</div>
 				</div>
+
 			</div>
 
 			<!-- email -->
@@ -138,9 +141,12 @@ async function submitForm() {
 				<label for="email">Email:</label><br />
 				<input type="email" id="email" v-model.trim="formData.email" /><br />
 				<!-- バリデーションエラー表示 -->
-				<div class="input=errors" v-for="error of v$.email.$errors" :key="error.$uid">
-					<div class="error-msg">{{ error.$message }}</div>
+				<div v-if="v$.email.$error">
+					<div class="input=errors" v-for="error in v$.email.$errors" :key="error.$uid">
+						<span class="error-msg">{{ error.$message }}</span>
+					</div>
 				</div>
+
 			</div>
 
 			<!-- tell -->
@@ -148,9 +154,12 @@ async function submitForm() {
 				<label for="tel">tel:</label><br />
 				<input type="tel" id="tel" v-model.trim="formData.tel" /><br />
 				<!-- バリデーションエラー表示 -->
-				<div class="input=errors" v-for="error of v$.tel.$errors" :key="error.$uid">
-					<div class="error-msg">{{ error.$message }}</div>
+				<div v-if="v$.tel.$error">
+					<div class="input=errors" v-for="error in v$.tel.$errors" :key="error.$uid">
+						<span class="error-msg">{{ error.$message }}</span>
+					</div>
 				</div>
+
 			</div>
 
 			<!-- 送信中は押せないようにする-->
