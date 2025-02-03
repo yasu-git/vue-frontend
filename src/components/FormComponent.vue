@@ -40,21 +40,18 @@ formDate{
 }	と記述する
 */
 const rules = {
-	formData: {
-		name: {
-			required
-		},
-		email: {
-			required,
-			email
-		},
-		tel: {
-			required,
-			minLength: minLength(10),
-			numeric,
-		},
-	}
-
+	name: {
+		required
+	},
+	email: {
+		required,
+		email
+	},
+	tel: {
+		required,
+		minLength: minLength(10),
+		numeric,
+	},
 };
 
 
@@ -122,37 +119,33 @@ async function submitForm() {
 		<form @submit.prevent="submitForm">
 			<!-- name, email, tellの入力フォーム -->
 			<!-- name -->
-			<div>
+			<div :class="{ error: v$.name.$errors.length }">
 				<label for="name">Name:</label><br />
-				<input type="text" id="name" v-model="formData.name" required /><br />
+				<input type="text" id="name" v-model="formData.name" /><br />
 				<!-- バリデーションエラー表示 -->
-				<p v-if="v$.formData.name.$error" class="error">
-					<span v-if="v$.formData.name.required">名前は必須です。</span>
-				</p>
-
+				<div class="input=errors" v-for="error of v$.name.$errors" :key="error.$uid">
+					<div class="error-msg">{{ error.$message }}</div>
+				</div>
 			</div>
 
 			<!-- email -->
-			<div>
+			<div :class="{ error: v$.email.$errors.length }">
 				<label for="email">Email:</label><br />
-				<input type="email" id="email" v-model.trim="formData.email" required /><br />
+				<input type="email" id="email" v-model.trim="formData.email" /><br />
 				<!-- バリデーションエラー表示 -->
-				<p v-if="v$.formData.email.$error" class="error">
-					<span v-if="v$.formData.email.required">メールアドレスは必須です。</span>
-					<span v-if="v$.formData.email.email">メールアドレスの形式が正しくありません。</span>
-				</p>
+				<div class="input=errors" v-for="error of v$.email.$errors" :key="error.$uid">
+					<div class="error-msg">{{ error.$message }}</div>
+				</div>
 			</div>
 
 			<!-- tell -->
-			<div>
+			<div :class="{ error: v$.tel.$errors.length }">
 				<label for="tel">tel:</label><br />
-				<input type="tel" id="tel" v-model.trim="formData.tel" required /><br />
+				<input type="tel" id="tel" v-model.trim="formData.tel" /><br />
 				<!-- バリデーションエラー表示 -->
-				<p v-if="v$.formData.tel.$error" class="error">
-					<span v-if="v$.formData.tel.required">電話番号は必須です。</span>
-					<span v-if="v$.formData.tel.minLength">電話番号は10桁以上で入力してください。</span>
-					<span v-if="v$.formData.tel.numeric">電話番号は数字で入力してください。</span>
-				</p>
+				<div class="input=errors" v-for="error of v$.tel.$errors" :key="error.$uid">
+					<div class="error-msg">{{ error.$message }}</div>
+				</div>
 			</div>
 
 			<!-- 送信中は押せないようにする-->
