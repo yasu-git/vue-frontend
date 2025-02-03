@@ -1,76 +1,119 @@
-<script>
-export default {
-	//dataオブジェクトにformDataとresponseMessageプロパティを追加
-	data() {
-		return {
-			formData: {
-				name: '',
-				email: '',
-				tel: '',
-			},
-			responseMessage: '',
-			isLoading: false,//送信中かどうかを示すフラグ
-			apiUrl: process.env.VUE_APP_API_URL || 'http://localhost:3000',// バックエンドのエンドポイント
+<script setup>
+//defineEmitsを追加 (emitを使うため)
+/* global defineEmits */
 
-		};
-	},
-	computed: {
-		//isLoadingプロパティに応じてボタンの表示を変更
-		nowLoading() {
-			return this.isLoading ? 'Loading...' : 'Submit';
+import { reactive, ref, computed } from 'vue';
+//validationを追加
+import { required, email, numeric, minLength } from '@vuelidate/validators';
+import { useVuelidate } from '@vuelidate/core';
+
+//イベントを親コンポーネントへ発火するために、emitを追加
+const emit = defineEmits(['user-added']);
+
+//フォームデータを定義(reactiveで管理)
+const formData = reactive({
+	name: '',
+	email: '',
+	tel: '',
+});
+
+//メッセージや送信中フラグを定義(refで管理)
+const responseMessage = ref('');
+const isLoading = ref(false);
+
+//サーバーサイドのエンドポイントを定義
+const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
+
+/*
+バリデーションルールを定義
+required: 必須
+email: メールアドレス形式
+numeric: 数字のみ
+minLength: 最小文字数
+バリデーションを使用しているところと同じ表記にする必要がある
+v$.name.$errorのように使用するときは、v$の後にバリデーション名を記述する
+v$.formDate.name.$errorのように使用するときは、v$の後にバリデーション名を記述する
+formDate{
+	name: { required },
+	email: { required, email },
+	tel: { required, minLength: minLength(10), numeric },
+}	と記述する
+*/
+const rules = {
+	formData: {
+		name: {
+			required
 		},
-	},
-	//methodsオブジェクトにsubmitFormメソッドを追加
-	methods: {
-		async submitForm() {
-			console.log("Sending data:", JSON.parse(JSON.stringify(this.formData)));
-			this.isLoading = true;//送信中フラグをtrueに設定
-			this.responseMessage = '';//responseMessageを空に設定
-
-			try {
-				//api/formへPOSTリクエストを送信
-				const response = await fetch(`${this.apiUrl}/api/form`, {
-					method: 'POST',//POSTリクエスト
-					//Content-Typeヘッダーをapplication/jsonに設定
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					//formDataオブジェクトをJSON文字列に変換してリクエストボディに設定
-					body: JSON.stringify(this.formData),
-				});
-
-				if(!response.ok) {
-					const errorData = await response.json();
-					throw new Error(errorData.message || 'Server Error');
-				}
-
-				//レスポンスをJSON形式で取得
-				const result = await response.json();
-
-				//resultオブジェクトのsuccessプロパティによってメッセージを設定
-				if (result.success) {
-					this.responseMessage = 'Form submitted successfully!';
-
-					//App.vueのhandleUserAddedメソッドを呼び出す
-					this.$emit('user-added');//user-addedイベントを発生させる
-					//送信後にフォームをリセット
-					this.formData = {
-						name: '',
-						email: '',
-						tel: '',
-					};
-				} else {
-					this.responseMessage = 'Failed to submit form.';
-				}
-			} catch (error) {//エラーが発生した場合の処理
-				console.error('Error:', error);
-				this.responseMessage = 'An error occurred.';
-			}finally {
-				this.isLoading = false;//送信中フラグをfalseに設定
-			}
+		email: {
+			required,
+			email
+		},
+		tel: {
+			required,
+			minLength: minLength(10),
+			numeric,
 		},
 	}
+
 };
+
+
+//useVuelidateでバリデーション状態を管理
+const v$ = useVuelidate(rules, formData);
+
+//buttonの表示用のcomputedを定義
+const nowLoading = computed(() => isLoading.value ? 'Loading...' : 'Submit');
+
+//フォーム送信処理
+async function submitForm() {
+
+	//バリデーションチェック
+	v$.value.$touch();
+
+	if (v$.value.$error) {
+		responseMessage.value = 'Please check the form.';
+		return;
+	}
+	//バリデーションチェック終わり
+
+
+	console.log("Sending data:", JSON.parse(JSON.stringify(formData)));
+	isLoading.value = true;
+	responseMessage.value = '';
+
+	try {
+		const response = await fetch(`${apiUrl}/api/form`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(formData),
+		});
+
+		if (!response.ok) {
+			const errorData = await response.json();
+			throw new Error(errorData.message || 'Server Error');
+		}
+
+		const result = await response.json();
+
+		if (result.success) {
+			responseMessage.value = 'Form submitted successfully!';
+			emit('user-added');
+			formData.name = '';
+			formData.email = '';
+			formData.tel = '';
+			v$.value.$reset();
+		} else {
+			responseMessage.value = 'Failed to submit form.';
+		}
+	} catch (error) {
+		console.error('Error:', error);
+		responseMessage.value = 'An error occurred.';
+	} finally {
+		isLoading.value = false;
+	}
+}
 </script>
 
 <template>
@@ -81,24 +124,40 @@ export default {
 			<!-- name -->
 			<div>
 				<label for="name">Name:</label><br />
-				<input type="text" id="name" v-model="formData.name" required /><br /><br />
+				<input type="text" id="name" v-model="formData.name" required /><br />
+				<!-- バリデーションエラー表示 -->
+				<p v-if="v$.formData.name.$error" class="error">
+					<span v-if="v$.formData.name.required">名前は必須です。</span>
+				</p>
+
 			</div>
 
 			<!-- email -->
 			<div>
 				<label for="email">Email:</label><br />
-				<input type="email" id="email" v-model.trim="formData.email" required /><br /><br />
+				<input type="email" id="email" v-model.trim="formData.email" required /><br />
+				<!-- バリデーションエラー表示 -->
+				<p v-if="v$.formData.email.$error" class="error">
+					<span v-if="v$.formData.email.required">メールアドレスは必須です。</span>
+					<span v-if="v$.formData.email.email">メールアドレスの形式が正しくありません。</span>
+				</p>
 			</div>
 
 			<!-- tell -->
 			<div>
 				<label for="tel">tel:</label><br />
-				<input type="tel" id="tel" v-model.trim="formData.tel" required/><br /><br />
+				<input type="tel" id="tel" v-model.trim="formData.tel" required /><br />
+				<!-- バリデーションエラー表示 -->
+				<p v-if="v$.formData.tel.$error" class="error">
+					<span v-if="v$.formData.tel.required">電話番号は必須です。</span>
+					<span v-if="v$.formData.tel.minLength">電話番号は10桁以上で入力してください。</span>
+					<span v-if="v$.formData.tel.numeric">電話番号は数字で入力してください。</span>
+				</p>
 			</div>
 
 			<!-- 送信中は押せないようにする-->
 			<button type="submit" :disabled="isLoading">
-				{{nowLoading}}
+				{{ nowLoading }}
 			</button>
 		</form>
 		<p v-if="responseMessage">{{ responseMessage }}</p>
