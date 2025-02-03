@@ -32,7 +32,6 @@ numeric: 数字のみ
 minLength: 最小文字数
 バリデーションを使用しているところと同じ表記にする必要がある
 v$.name.$errorのように使用するときは、v$の後にバリデーション名を記述する
-v$.formDate.name.$errorのように使用するときは、v$の後にバリデーション名を記述する
 formDate{
 	name: { required },
 	email: { required, email },
@@ -64,7 +63,7 @@ const rules = {
 const v$ = useVuelidate(rules, formData);
 
 //buttonの表示用のcomputedを定義
-const nowLoading = computed(() => isLoading.value ? 'Loading...' : 'Submit');
+const nowLoading = computed(() => (isLoading.value ? 'Loading...' : 'Submit'));
 
 //フォーム送信処理
 async function submitForm() {
@@ -102,9 +101,7 @@ async function submitForm() {
 		if (result.success) {
 			responseMessage.value = 'Form submitted successfully!';
 			emit('user-added');
-			formData.name = '';
-			formData.email = '';
-			formData.tel = '';
+			Object.assign(formData, { name: '', email: '', tel: '' });
 			v$.value.$reset();
 		} else {
 			responseMessage.value = 'Failed to submit form.';
@@ -124,12 +121,13 @@ async function submitForm() {
 		<form @submit.prevent="submitForm">
 			<!-- name, email, tellの入力フォーム -->
 			<!-- name -->
-			<div :class="{ error: v$.name.$errors.length }">
+			<div :class="{ error: v$.name.$error }">
 				<label for="name">Name:</label><br />
-				<input type="text" id="name" v-model="formData.name" /><br />
+				<!-- 各入力欄でユーザがフォーカスを話したタイミングで個別に$touch()を呼び出し、入力後すぐエラーを表示を反映させる。 -->
+				<input type="text" id="name" v-model="formData.name" @blur="v$.name.$touch()"/><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="v$.name.$error">
-					<div class="input=errors" v-for="error in v$.name.$errors" :key="error.$uid">
+					<div class="input-errors" v-for="error in v$.name.$errors" :key="error.$uid">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
@@ -137,12 +135,12 @@ async function submitForm() {
 			</div>
 
 			<!-- email -->
-			<div :class="{ error: v$.email.$errors.length }">
+			<div :class="{ error: v$.email.$error }">
 				<label for="email">Email:</label><br />
-				<input type="email" id="email" v-model.trim="formData.email" /><br />
+				<input type="email" id="email" v-model.trim="formData.email" @blur="v$.email.$touch()" /><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="v$.email.$error">
-					<div class="input=errors" v-for="error in v$.email.$errors" :key="error.$uid">
+					<div class="input-errors" v-for="error in v$.email.$errors" :key="error.$uid">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
@@ -150,12 +148,12 @@ async function submitForm() {
 			</div>
 
 			<!-- tell -->
-			<div :class="{ error: v$.tel.$errors.length }">
+			<div :class="{ error: v$.tel.$error }">
 				<label for="tel">tel:</label><br />
-				<input type="tel" id="tel" v-model.trim="formData.tel" /><br />
+				<input type="tel" id="tel" v-model.trim="formData.tel" @blur="v$.tel.$touch()" /><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="v$.tel.$error">
-					<div class="input=errors" v-for="error in v$.tel.$errors" :key="error.$uid">
+					<div class="input-errors" v-for="error in v$.tel.$errors" :key="error.$uid">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
