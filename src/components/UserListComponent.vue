@@ -40,6 +40,65 @@
 
 </template>
 
+
+<!-- vue vsersion.3 -->
+<script setup>
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
+//変数の宣言
+// メッセージの状態を保持
+const message = ref("User List");
+// ユーザー一覧データを保持する配列
+const users = ref([]);
+// ローディング状態を管理
+const isLoading = ref(false);
+// エラーメッセージの状態を保持
+const errorMessage = ref("");
+// APIのエンドポイントURL（環境変数から取得 or デフォルト）
+const apiUrl = process.env.VUE_APP_API_URL || "http://localhost:3000";
+
+// ユーザー情報を取得する非同期関数
+const fetchUsers = async () => {
+	isLoading.value = true; // ローディング開始
+	errorMessage.value = ""; // エラーメッセージをクリア
+
+	try {
+		// APIからデータを取得
+		const response = await axios.get(`${apiUrl}/api/notes_from_b`);
+		if (response.status !== 200) {
+			throw new Error("APIリクエスト失敗");
+		}
+		// 取得したデータをusers配列に格納
+		users.value = response.data.map(user => ({
+			id: user.id || "不明",
+			name: user.name || "N/A",
+			email: user.email || "N/A",
+			tel: user.tel || "N/A",
+		}));
+		console.log("取得したユーザーデータ", users.value);
+	} catch (error) {
+		console.error("データの取得に失敗しました", error);
+		errorMessage.value = error.response?.data?.message || "データの取得に失敗しました";
+	} finally {
+		isLoading.value = false; // ローディング終了
+	}
+};
+
+// コンポーネントがマウントされたらfetchUsersを実行
+onMounted(fetchUsers);
+</script>
+
+<style scoped>
+/* コンテナの余白設定 */
+.container {
+	margin-top: 20px;
+}
+</style>
+
+<!-- vue vsersion.2の記述方法 -->
+<!--
+
 <script>
 import axios from "axios";// axiosをインポート
 
@@ -96,3 +155,5 @@ export default {
 	margin-top: 20px;
 }
 </style>
+
+-->
