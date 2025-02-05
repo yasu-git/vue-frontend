@@ -48,7 +48,7 @@ import axios from "axios";
 
 //変数の宣言
 // メッセージの状態を保持
-const message = ref("User List");
+const message = "User List";
 // ユーザー一覧データを保持する配列
 const users = ref([]);
 // ローディング状態を管理
@@ -79,7 +79,7 @@ const fetchUsers = async () => {
 		console.log("取得したユーザーデータ", users.value);
 	} catch (error) {
 		console.error("データの取得に失敗しました", error);
-		errorMessage.value = error.response?.data?.message || "データの取得に失敗しました";
+		errorMessage.value = "データの取得に失敗しました";
 	} finally {
 		isLoading.value = false; // ローディング終了
 	}
