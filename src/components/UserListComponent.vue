@@ -13,28 +13,30 @@
 			{{ errorMessage }}
 		</div>
 
-		<table class="table" v-if="!isLoading && users.length">
+		<table v-if="!isLoading" class="table">
 			<thead class="thead-dark">
 				<tr>
 					<th>連番</th>
 					<th>Name</th>
 					<th>Mail</th>
 					<th>Tel</th>
+					<th>削除</th>
 				</tr>
 			</thead>
 			<!-- データを表示する部分 -->
 			<tbody>
-				<tr v-for="(user, index) in users" :key="user.Id">
+				<tr v-for="(user, index) in users" :key="user.id">
 					<td>{{ index + 1 }}</td>
 					<td>{{ user.name || "N/A" }}</td>
 					<td>{{ user.email || "N/A" }}</td>
 					<td>{{ user.tel || "N/A" }}</td>
+					<td><button @click="deleteUser(user.id)">削除</button></td>
 				</tr>
 			</tbody>
 		</table>
 		<!-- エラー発生時の表示 -->
 		<div v-if="error" class="alert alert-danger" role="alert">
-			{{ error }}
+			{{ errorMessage }}
 		</div>
 	</div>
 
@@ -56,8 +58,9 @@ const isLoading = ref(false);
 // エラーメッセージの状態を保持
 const errorMessage = ref("");
 // APIのエンドポイントURL（環境変数から取得 or デフォルト）
+/* global process */
 const apiUrl = process.env.VUE_APP_API_URL || "http://localhost:3000";
-
+const usersCrudUrl = process.env.VUE_APP_USER_CRUD_URL;
 // ユーザー情報を取得する非同期関数
 const fetchUsers = async () => {
 	isLoading.value = true; // ローディング開始
@@ -65,13 +68,14 @@ const fetchUsers = async () => {
 
 	try {
 		// APIからデータを取得
-		const response = await axios.get(`${apiUrl}/api/notes_from_b`);
+		const response = await axios.get(`${apiUrl}${usersCrudUrl}`);
 		if (response.status !== 200) {
 			throw new Error("APIリクエスト失敗");
 		}
+		console.log(users)
 		// 取得したデータをusers配列に格納
 		users.value = response.data.map(user => ({
-			id: user.id || "不明",
+			id: user._id || "不明",
 			name: user.name || "N/A",
 			email: user.email || "N/A",
 			tel: user.tel || "N/A",
@@ -82,6 +86,27 @@ const fetchUsers = async () => {
 		errorMessage.value = "データの取得に失敗しました";
 	} finally {
 		isLoading.value = false; // ローディング終了
+	}
+};
+
+// ユーザー情報を削除する関数
+const deleteUser = async (id) => {
+
+	if (!id || id === "不明") {
+		alert("削除できません: IDが無効です");
+		return;
+	}
+
+	if (!confirm("本当に削除しますか？")) return;
+
+	try {
+		await axios.delete(`${apiUrl}${usersCrudUrl}/${id}`);
+		// フロントエンドのusersリストから削除
+		users.value = users.value.filter(user => user.id !== id);
+		alert("削除しました");
+	} catch (error) {
+		console.error("削除に失敗しました", error);
+		alert("削除に失敗しました");
 	}
 };
 

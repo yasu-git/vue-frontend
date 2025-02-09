@@ -157,9 +157,9 @@ async function submitForm() {
 </script>
 
 <template>
-	<div class="container">
-		<h1>Form Submission</h1>
-		<form @submit.prevent="submitForm">
+	<v-container>
+		<v-card-title class="text-h5">Form Submission</v-card-title>
+		<v-form @submit.prevent="submitForm">
 			<!-- name, email, tellの入力フォーム -->
 			<!-- name -->
 			<div :class="{ error: $v.name.$error }">
@@ -202,10 +202,14 @@ async function submitForm() {
 			</div>
 
 			<!-- 送信中は押せないようにする-->
-			<button type="submit" :disabled="isLoading">
+			<v-btn color="primary" class="mt-3" type="submit" :disabled="isLoading">
 				{{ nowLoading }}
-			</button>
-		</form>
-		<p v-if="responseMessage">{{ responseMessage }}</p>
-	</div>
+			</v-btn>
+		</v-form>
+		<v-card-actions>
+        <v-alert v-if="responseMessage" type="info" class="mt-3">
+          {{ responseMessage }}
+        </v-alert>
+      </v-card-actions>
+	</v-container>
 </template>
