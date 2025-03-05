@@ -27,6 +27,14 @@ const nowLoading = computed(() => (isLoading.value ? 'Loading...' : 'Submit'));
 const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData);
 
 /**
+ * **入力時にエラーメッセージをリセット**
+ */
+ function clearResponseMessage() {
+  responseMessage.value = ''; // エラーメッセージをクリア
+}
+
+
+/**
  * フォームのリセット処理
  * - フォームデータを初期化
  * - バリデーションのリセット
@@ -102,7 +110,7 @@ async function submitForm() {
 			<!-- 名前の入力欄 -->
 			<div :class="{ error: $v.name.$error }">
 				<label for="name">名前:</label><br />
-				<input id="name" ref="nameInput" v-model="formData.name" type="text" @blur="$v.name.$touch()" /><br />
+				<input id="name" ref="nameInput" v-model="formData.name" type="text" @blur="$v.name.$touch()" @input="clearResponseMessage"/><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.name.$error">
 					<div v-for="error in $v.name.$errors" :key="error.$uid" class="input-errors">
@@ -115,7 +123,7 @@ async function submitForm() {
 			<div :class="{ error: $v.email.$error }">
 				<label for="email">メールアドレス:</label><br />
 				<input id="email" ref="emailInput" v-model.trim="formData.email" type="email"
-					@blur="$v.email.$touch()" /><br />
+					@blur="$v.email.$touch()" @input="clearResponseMessage"/><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.email.$error">
 					<div v-for="error in $v.email.$errors" :key="error.$uid" class="input-errors">
@@ -127,7 +135,7 @@ async function submitForm() {
 			<!-- 電話番号の入力欄 -->
 			<div :class="{ error: $v.tel.$error }">
 				<label for="tel">電話番号:</label><br />
-				<input id="tel" ref="telInput" v-model.trim="formData.tel" type="tel" @blur="$v.tel.$touch()" /><br />
+				<input id="tel" ref="telInput" v-model.trim="formData.tel" type="tel" @blur="$v.tel.$touch()" @input="clearResponseMessage"/><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.tel.$error">
 					<div v-for="error in $v.tel.$errors" :key="error.$uid" class="input-errors">
@@ -153,6 +161,7 @@ async function submitForm() {
 	color: red;
 	font-size: 14px;
 }
+
 
 
 /* エラーメッセージ全体のスタイル */
