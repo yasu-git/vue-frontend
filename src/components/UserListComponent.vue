@@ -125,7 +125,7 @@ const deleteUser = async (id) => {
  *  ユーザーを更新する関数
  * - API に `DELETE` リクエストを送信して、ユーザーを更新
  */
-const updateUser = async (id)=>{
+const updateUser = async (id) => {
 	// ID が無効な場合、編集を中止
 	if (!id || id === "不明") {
 		alert("削除できません: IDが無効です");
@@ -146,6 +146,10 @@ const updateUser = async (id)=>{
 	}
 };
 
+// `fetchUsers` を外部 (`App.vue`) から呼び出せるようにする
+defineExpose({
+	fetchUsers
+});
 // コンポーネントがマウントされたら `fetchUsers` を実行し、ユーザーリストを取得
 onMounted(fetchUsers);
 </script>

@@ -1,249 +1,142 @@
 <script setup>
-//defineEmitsを追加 (emitを使うため)
-/* global defineEmits */
+import { ref, reactive, computed } from 'vue';
+import { useValidation } from '@/composables/useValidation';
 
-import { reactive, ref, computed ,nextTick} from 'vue';
-//validationを追加
-import { required, email, numeric, minLength, helpers } from '@vuelidate/validators';
-import { useVuelidate } from '@vuelidate/core';
-import { useTemplateRef } from 'vue';
-
-//イベントを親コンポーネントへ発火するために、emitを追加
+// 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
 const emit = defineEmits(['user-added']);
 
-//メッセージや送信中フラグを定義(refで管理)
-const responseMessage = ref('');
-const isLoading = ref(false);
+// UI の状態を管理するための `ref`
+const responseMessage = ref(''); // フォーム送信結果のメッセージ
+const isLoading = ref(false); // API リクエスト中かどうかを管理
 
-//サーバーサイドのエンドポイントを定義
 /* global process */
 const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
 const usersCrudUrl = process.env.VUE_APP_USER_CRUD_URL;
 
-// ** `useTemplateRef` を使ってフォームの各要素を取得**/
-const nameInput = useTemplateRef();
-const emailInput = useTemplateRef();
-const telInput = useTemplateRef();
-
-// ** `useTemplateRef` を使ってフォーム全体を取得**/
-const formRef = useTemplateRef();
-
-//buttonの表示用のcomputedを定義
-const nowLoading = computed(() => (isLoading.value ? 'Loading...' : 'Submit'));
-
-
-//ここからバリデーションの記述
-
-//フォームデータを定義(reactiveで管理)
+// `reactive` を使用してフォームデータを管理
 const formData = reactive({
 	name: '',
 	email: '',
-	tel: '',
+	tel: ''
 });
 
+// ボタンの表示メッセージ（送信中は `Loading...` を表示）
+const nowLoading = computed(() => (isLoading.value ? 'Loading...' : 'Submit'));
+
+// バリデーション（useValidation を使用）
+const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData);
+
 /**
- *  バリデーションルールを定義
- * - `required`: 必須
- * - `email`: メールアドレス形式
- * - `numeric`: 数字のみ
- * - `minLength`: 最小文字数
+ * フォームのリセット処理
+ * - フォームデータを初期化
+ * - バリデーションのリセット
+ * - メッセージのクリア
  */
-const rules = {
-	//nameのバリデーション
-	name: {
-		/*
-		helpers.withMessageでエラーメッセージをカスタマイズ
-		エラーメッセージをカスタマイズする場合は、エラーメッセージを第二引数に追加する
-		必要なければ、requiredのみ記述する
-		*/
-		required: helpers.withMessage('名前は必須です.', required),
-	},
-	//emailのバリデーション
-	email: {
-		required: helpers.withMessage('emailは必須です.', required),
-		email: helpers.withMessage('正しいメールアドレスを入力してください。.', email),
-	},
-	//tellのバリデーション
-	tel: {
-		required: helpers.withMessage('電話番号は必須です.', required),
-		minLength: helpers.withMessage('電話番号は１０桁以上で入力してください。', minLength(10)),
-		numeric: helpers.withMessage('数字のみ入力してください.', numeric),
-	},
-};
-
-//useVuelidate を使用し、バリデーション状態を管理
-const $v = useVuelidate(rules, formData);
-
-// **🎯 バリデーションエラー時、最初のエラーに `focus()` を適用**/
-async function handleValidationErrors() {
-	await nextTick(); // UI 更新後に処理を実行
-	if ($v.value.name.$error && nameInput.value) {
-    	nameInput.value.focus();
-	} else if ($v.value.email.$error && emailInput.value) {
-		emailInput.value.focus();
-	} else if ($v.value.tel.$error && telInput.value) {
-		telInput.value.focus();
-	}
+function resetForm() {
+	Object.assign(formData, { name: '', email: '', tel: '' });
+	$v.value.$reset();
+	responseMessage.value = ''; // メッセージをリセット
 }
 
 /**
- *  フォーム送信処理
+ * フォーム送信処理
  * - バリデーションチェック
  * - API にデータを送信
  * - 成功時にフォームをリセット & 親コンポーネントに通知
  */
 async function submitForm() {
-
-	//バリデーションを実行
+	// バリデーション実行
 	$v.value.$touch();
-
-	//バリデーションエラーがある場合、処理を中断
 	if ($v.value.$invalid) {
-		//エラーがあればメッセージを表示
-		responseMessage.value = 'Please check the form.';
-		handleValidationErrors();
+		responseMessage.value = 'フォームにエラーがあります。';
+		await handleValidationErrors(); // エラーのある入力欄にフォーカスを当てる
 		return;
 	}
-	//バリデーションチェック終わり
 
-	//フォームデータをログに出力（デバッグ用）
-	console.log("Sending data:", JSON.parse(JSON.stringify(formData)));
-
-	//ローディングを開始
 	isLoading.value = true;
-	//レスポンスメッセージをリセット
 	responseMessage.value = '';
 
 	try {
-
-		//API にフォームデータを送信（POST）
+		// API へフォームデータを送信
 		const response = await fetch(`${apiUrl}${usersCrudUrl}`, {
-			//POSTリクエスト
 			method: 'POST',
-			//ヘッダーをJSON形式で送信
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			//フォームデータをJSON形式で送信
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(formData),
 		});
 
-		// API からエラーが返された場合
-		if (!response.ok) {
+		console.log('APIリクエスト送信: ', formData); // デバッグ用
 
-			const errorData = await response.json();
-			throw new Error(errorData.message || 'Server Error');
-
-		}
-
-		//成功時のレスポンスを取得
+		// API からのレスポンスを取得
 		const result = await response.json();
 
-		//成功したらフォームをリセット
-		if (result.success) {
-
-			//成功メッセージを表示
-			responseMessage.value = 'Form submitted successfully!';
-			//親コンポーネントへイベントを発火
-			emit('user-added');
-			//フォームをリセット
-			Object.assign(formData, { name: '', email: '', tel: '' });
-			//バリデーションエラーをリセット
-			$v.value.$reset();
-
-			// **🎯 `formRef` を使用してフォームをリセット**
-			if (formRef.value) {
-        		formRef.value.reset(); // ここで `formRef` を活用
-			}
-
-			await nextTick();
-			nameInput.value.focus();
-
-		} else {
-
-			//失敗メッセージを表示
-			responseMessage.value = 'Failed to submit form.';
-
+		// API エラー時の処理
+		if (!response.ok) {
+			throw new Error(result.message || 'サーバーエラーが発生しました');
 		}
+
+		// 成功時の処理
+		responseMessage.value = 'ユーザーが登録されました！';
+		console.log('登録成功');
+
+		// 親コンポーネントへユーザー追加のイベントを発火
+		emit('user-added');
+
+		// フォームをリセット
+		resetForm();
+		nameInput.value.focus();
+
 	} catch (error) {
-
-		//エラーメッセージを表示
-		console.error('Error:', error);
-		//エラーメッセージを表示
-		responseMessage.value = 'An error occurred.';
-
+		console.error('送信エラー:', error);
+		responseMessage.value = 'エラーが発生しました。';
 	} finally {
-
-		//ローディングを終了
-		isLoading.value = false;
+		console.log('APIリクエスト終了');
+		isLoading.value = false; // ローディング状態を解除
 	}
 }
 </script>
 
 <template>
 	<div class="container">
-		<h1>Form Submission</h1>
+		<h1>ユーザー登録</h1>
 		<form ref="formRef" @submit.prevent="submitForm">
-			<!-- name, email, tellの入力フォーム -->
-			<!-- name -->
+			<!-- 名前の入力欄 -->
 			<div :class="{ error: $v.name.$error }">
-				<label for="name">Name:</label><br />
-				<!-- 各入力欄でユーザがフォーカスを話したタイミングで個別に$touch()を呼び出し、入力後すぐエラーを表示を反映させる。 -->
-				<input
-				id="name"
-				ref="nameInput"
-				v-model="formData.name"
-				type="text"
-				@blur="$v.name.$touch()"
-				/><br />
+				<label for="name">名前:</label><br />
+				<input id="name" ref="nameInput" v-model="formData.name" type="text" @blur="$v.name.$touch()" /><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.name.$error">
 					<div v-for="error in $v.name.$errors" :key="error.$uid" class="input-errors">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
-
 			</div>
 
-			<!-- email -->
+			<!-- メールの入力欄 -->
 			<div :class="{ error: $v.email.$error }">
-				<label for="email">Email:</label><br />
-				<input
-				id="email"
-				ref="emailInput"
-				v-model.trim="formData.email"
-				type="email"
-				@blur="$v.email.$touch()"
-				/><br />
+				<label for="email">メールアドレス:</label><br />
+				<input id="email" ref="emailInput" v-model.trim="formData.email" type="email"
+					@blur="$v.email.$touch()" /><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.email.$error">
 					<div v-for="error in $v.email.$errors" :key="error.$uid" class="input-errors">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
-
 			</div>
 
-			<!-- tell -->
+			<!-- 電話番号の入力欄 -->
 			<div :class="{ error: $v.tel.$error }">
-				<label for="tel">tel:</label><br />
-				<input
-				id="tel"
-				ref="telInput"
-				v-model.trim="formData.tel"
-				type="tel"
-				@blur="$v.tel.$touch()"
-				/><br />
+				<label for="tel">電話番号:</label><br />
+				<input id="tel" ref="telInput" v-model.trim="formData.tel" type="tel" @blur="$v.tel.$touch()" /><br />
 				<!-- バリデーションエラー表示 -->
 				<div v-if="$v.tel.$error">
 					<div v-for="error in $v.tel.$errors" :key="error.$uid" class="input-errors">
 						<span class="error-msg">{{ error.$message }}</span>
 					</div>
 				</div>
-
 			</div>
 
-			<!--送信ボタン（ローディング中は無効化-->
+			<!-- 送信ボタン（ローディング中は無効化） -->
 			<button type="submit" :disabled="isLoading">
 				{{ nowLoading }}
 			</button>
@@ -253,3 +146,18 @@ async function submitForm() {
 		<p v-if="responseMessage">{{ responseMessage }}</p>
 	</div>
 </template>
+
+<style scoped>
+/* エラーメッセージのスタイル */
+.error-msg {
+	color: red;
+	font-size: 14px;
+}
+
+
+/* エラーメッセージ全体のスタイル */
+p.error {
+	color: red;
+	font-weight: bold;
+}
+</style>
