@@ -1,6 +1,7 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, nextTick } from 'vue';
 import { useValidation } from '@/composables/useValidation';
+import CustomInput from './CustomInput.vue';
 
 // 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
 const emit = defineEmits(['user-added']);
@@ -29,8 +30,8 @@ const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValid
 /**
  * **入力時にエラーメッセージをリセット**
  */
- function clearResponseMessage() {
-  responseMessage.value = ''; // エラーメッセージをクリア
+function clearResponseMessage() {
+	responseMessage.value = ''; // エラーメッセージをクリア
 }
 
 
@@ -91,8 +92,10 @@ async function submitForm() {
 
 		// フォームをリセット
 		resetForm();
-		nameInput.value.focus();
-
+		await nextTick();
+		if (nameInput.value) {
+			nameInput.value.focus();
+		}
 	} catch (error) {
 		console.error('送信エラー:', error);
 		responseMessage.value = 'エラーが発生しました。';
@@ -108,41 +111,30 @@ async function submitForm() {
 		<h1>ユーザー登録</h1>
 		<form ref="formRef" @submit.prevent="submitForm">
 			<!-- 名前の入力欄 -->
-			<div :class="{ error: $v.name.$error }">
-				<label for="name">名前:</label><br />
-				<input id="name" ref="nameInput" v-model="formData.name" type="text" @blur="$v.name.$touch()" @input="clearResponseMessage"/><br />
-				<!-- バリデーションエラー表示 -->
-				<div v-if="$v.name.$error">
-					<div v-for="error in $v.name.$errors" :key="error.$uid" class="input-errors">
-						<span class="error-msg">{{ error.$message }}</span>
-					</div>
-				</div>
-			</div>
 
-			<!-- メールの入力欄 -->
-			<div :class="{ error: $v.email.$error }">
-				<label for="email">メールアドレス:</label><br />
-				<input id="email" ref="emailInput" v-model.trim="formData.email" type="email"
-					@blur="$v.email.$touch()" @input="clearResponseMessage"/><br />
-				<!-- バリデーションエラー表示 -->
-				<div v-if="$v.email.$error">
-					<div v-for="error in $v.email.$errors" :key="error.$uid" class="input-errors">
-						<span class="error-msg">{{ error.$message }}</span>
-					</div>
-				</div>
-			</div>
+			<CustomInput
+			id="name"
+			v-model="formData.name"
+			label="名前:"
+			:validation="$v.name"
+			@clear-response-message="clearResponseMessage"
+			/>
 
-			<!-- 電話番号の入力欄 -->
-			<div :class="{ error: $v.tel.$error }">
-				<label for="tel">電話番号:</label><br />
-				<input id="tel" ref="telInput" v-model.trim="formData.tel" type="tel" @blur="$v.tel.$touch()" @input="clearResponseMessage"/><br />
-				<!-- バリデーションエラー表示 -->
-				<div v-if="$v.tel.$error">
-					<div v-for="error in $v.tel.$errors" :key="error.$uid" class="input-errors">
-						<span class="error-msg">{{ error.$message }}</span>
-					</div>
-				</div>
-			</div>
+			<CustomInput
+			id="email"
+			v-model="formData.name"
+			label="メールアドレス:"
+			:validation="$v.email"
+			@clear-response-message="clearResponseMessage"
+			/>
+
+			<CustomInput
+			id="tel"
+			v-model="formData.name"
+			label="電話番号:"
+			:validation="$v.tel"
+			@clear-response-message="clearResponseMessage"
+			/>
 
 			<!-- 送信ボタン（ローディング中は無効化） -->
 			<button type="submit" :disabled="isLoading">
