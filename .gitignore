@@ -24,3 +24,6 @@ pnpm-debug.log*
 
 # データベース設定ファイル
 config.js
+
+# 環境変数ファイル
+.env

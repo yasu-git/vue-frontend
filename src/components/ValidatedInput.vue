@@ -18,7 +18,26 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits } from 'vue';
+
+/**
+ * ✅ **バリデーション付き入力コンポーネント**
+ * - `v-model` で値をバインド
+ * - `@clear-response-message` イベントでエラーメッセージをリセット
+ *
+ * 📌 **使用例:**
+ * ```vue
+ * <ValidatedInput
+ *   id="email"
+ *   v-model="formData.email"
+ *   label="メールアドレス"
+ *   type="email"
+ *   :validation="$v.email"
+ *   :inputRef="emailInput"
+ *   @clear-response-message="clearResponseMessage"
+ * />
+ * ```
+ */
 
 // **Props（親コンポーネントから受け取る）**
 defineProps({
@@ -41,7 +60,11 @@ defineProps({
 	validation: {
     type: Object,
     default: () => ({ $touch: () => {}, $error: false, $errors: [] }), // ✅ デフォルト値を設定
-  }, // Vuelidate のバリデーションオブジェクト
+  	}, // Vuelidate のバリデーションオブジェクト
+	inputRef: {
+		type: Object,
+		default: null,
+	},
 });
 
 // **Emit イベント（親に値を伝える）**
@@ -53,8 +76,6 @@ function handleInput(event) {
 	emit('clear-response-message'); // エラーメッセージをクリア
 }
 
-// **入力フィールドの `ref`（フォーカス管理用）**
-const inputRef = ref(null);
 </script>
 
 <style scoped>

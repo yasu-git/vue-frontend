@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, nextTick } from 'vue';
 import { useValidation } from '@/composables/useValidation';
-import CustomInput from './CustomInput.vue';
+import ValidatedInput from './ValidatedInput.vue';
 
 // 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
 const emit = defineEmits(['user-added']);
@@ -112,27 +112,30 @@ async function submitForm() {
 		<form ref="formRef" @submit.prevent="submitForm">
 			<!-- 名前の入力欄 -->
 
-			<CustomInput
+			<ValidatedInput
 			id="name"
 			v-model="formData.name"
 			label="名前:"
 			:validation="$v.name"
+			:input-ref="nameInput"
 			@clear-response-message="clearResponseMessage"
 			/>
 
-			<CustomInput
+			<ValidatedInput
 			id="email"
-			v-model="formData.name"
+			v-model="formData.email"
 			label="メールアドレス:"
 			:validation="$v.email"
+			:input-ref="emailInput"
 			@clear-response-message="clearResponseMessage"
 			/>
 
-			<CustomInput
+			<ValidatedInput
 			id="tel"
-			v-model="formData.name"
+			v-model="formData.tel"
 			label="電話番号:"
 			:validation="$v.tel"
+			:input-ref="telInput"
 			@clear-response-message="clearResponseMessage"
 			/>
 
