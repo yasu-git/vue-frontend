@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, reactive, watch } from "vue";
 import axios from "axios";
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from "./ValidatedInput.vue";
@@ -76,12 +76,20 @@ const isShow = ref(true);
 // 親コンポーネントへイベントを送信
 const emit = defineEmits(["update-success", "cancel-edit"]);
 
-// リアクティブな `updatedUser`
-const updatedUser = ref({ ...props.editUserData });
 
-// props.editUserData が変更されたら updatedUser に反映
+// `updatedUser` をリアクティブなオブジェクトにする
+const updatedUser = reactive({
+	id: "",
+	name: "",
+	email: "",
+	tel: ""
+});
+
+// `editUserData` の変更を監視し、`updatedUser` を更新
 watch(() => props.editUserData, (newData) => {
-	updatedUser.value = { ...newData };
+	if (newData && newData.id) {
+		Object.assign(updatedUser, newData);
+	}
 });
 
 // バリデーション（useValidation を使用）
