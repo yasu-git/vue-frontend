@@ -13,6 +13,15 @@
 			{{ errorMessage }}
 		</div>
 
+		<FormUpdateComponent
+		v-if="editFormShow"
+			:editUserData="selectedUser"
+			:apiUrl="apiUrl"
+			:usersCrudUrl="usersCrudUrl"
+			@update-success="handleUpdateSuccess"
+			@cancel-edit="cancelEdit"
+    	/>
+
 		<!-- ユーザーリスト表示 -->
 		<table v-if="!isLoading" class="table">
 			<thead class="thead-dark">
@@ -32,7 +41,7 @@
 					<td>{{ user.email || "N/A" }}</td>
 					<td>{{ user.tel || "N/A" }}</td>
 					<td>
-						<button @click="updateUser(user.id)">更新</button>
+						<button @click="editUser(user)">更新</button>
 					</td>
 					<td>
 						<button @click="deleteUser(user.id)">削除</button>
@@ -46,12 +55,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+import FormUpdateComponent from "./FormUpdateComponent.vue";
 
 // 変数の宣言
 const message = "User List"; // タイトルメッセージ
 const users = ref([]); // ユーザーリスト（リアクティブな配列）
 const isLoading = ref(false); // ローディング状態を管理
 const errorMessage = ref(""); // エラーメッセージを管理
+const editFormShow = ref(false);
+const selectedUser = ref(null);
 
 // API のエンドポイントを設定（環境変数を利用）
 /* global process */
@@ -125,25 +137,21 @@ const deleteUser = async (id) => {
  *  ユーザーを更新する関数
  * - API に `DELETE` リクエストを送信して、ユーザーを更新
  */
-const updateUser = async (id) => {
-	// ID が無効な場合、編集を中止
-	if (!id || id === "不明") {
-		alert("削除できません: IDが無効です");
-		return;
-	}
+// ユーザーを編集
+const editUser = (user) => {
+	selectedUser.value = { ...user };
+	editFormShow.value = true;
+};
 
-	try {
-		// API に DELETE リクエストを送信
-		await axios.delete(`${apiUrl}${usersCrudUrl}/${id}`);
+// 更新成功時の処理
+const handleUpdateSuccess = async () => {
+	editFormShow.value = false;
+	await fetchUsers();
+};
 
-		// フロントエンドの `users` リストから該当 ID のユーザーを削除
-		users.value = users.value.filter(user => user.id !== id);
-		alert("削除しました");
-	} catch (error) {
-		//  削除失敗時の処理
-		console.error("削除に失敗しました", error);
-		alert("削除に失敗しました");
-	}
+// 編集キャンセル
+const cancelEdit = () => {
+	editFormShow.value = false;
 };
 
 // `fetchUsers` を外部 (`App.vue`) から呼び出せるようにする

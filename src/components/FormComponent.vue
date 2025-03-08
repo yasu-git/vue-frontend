@@ -2,6 +2,7 @@
 import { ref, reactive, computed, nextTick } from 'vue';
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from './ValidatedInput.vue';
+import { fetchAPI } from '@/composables/unit';
 
 // 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
 const emit = defineEmits(['user-added']);
@@ -67,21 +68,7 @@ async function submitForm() {
 
 	try {
 		// API へフォームデータを送信
-		const response = await fetch(`${apiUrl}${usersCrudUrl}`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(formData),
-		});
-
-		console.log('APIリクエスト送信: ', formData); // デバッグ用
-
-		// API からのレスポンスを取得
-		const result = await response.json();
-
-		// API エラー時の処理
-		if (!response.ok) {
-			throw new Error(result.message || 'サーバーエラーが発生しました');
-		}
+		await fetchAPI(`${apiUrl}${usersCrudUrl}`, 'POST', formData);
 
 		// 成功時の処理
 		responseMessage.value = 'ユーザーが登録されました！';

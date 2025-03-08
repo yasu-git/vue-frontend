@@ -33,7 +33,7 @@ import { defineProps, defineEmits } from 'vue';
  *   label="メールアドレス"
  *   type="email"
  *   :validation="$v.email"
- *   :inputRef="emailInput"
+ *   :input-ref="emailInput"
  *   @clear-response-message="clearResponseMessage"
  * />
  * ```
