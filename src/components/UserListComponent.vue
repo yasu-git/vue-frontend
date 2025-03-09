@@ -14,13 +14,12 @@
 		</div>
 
 		<FormUpdateComponent
-		v-if="editFormShow"
-			:editUserData="selectedUser"
-			:apiUrl="apiUrl"
-			:usersCrudUrl="usersCrudUrl"
+			:edit-user-data="selectedUser"
+			:api-url="apiUrl"
+			:users-crud-url="usersCrudUrl"
 			@update-success="handleUpdateSuccess"
 			@cancel-edit="cancelEdit"
-    	/>
+		/>
 
 		<!-- ユーザーリスト表示 -->
 		<table v-if="!isLoading" class="table">

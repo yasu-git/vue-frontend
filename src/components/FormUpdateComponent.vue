@@ -1,7 +1,7 @@
 <template>
 	<div v-if="editUserData" class="update-form">
 		<h3>ユーザー情報を編集</h3>
-		<div v-if="isShow">
+		<div v-if="!isConfirming">
 
 			<!-- 入力フォーム -->
 			<ValidatedInput
@@ -71,7 +71,6 @@ const props = defineProps({
 	},
 });
 
-const isShow = ref(true);
 
 // 親コンポーネントへイベントを送信
 const emit = defineEmits(["update-success", "cancel-edit"]);
@@ -85,15 +84,23 @@ const updatedUser = reactive({
 	tel: ""
 });
 
+/**
+ * **入力時にエラーメッセージをリセット**
+ */
+function clearResponseMessage() {
+	responseMessage.value = ''; // エラーメッセージをクリア
+}
+
 // `editUserData` の変更を監視し、`updatedUser` を更新
 watch(() => props.editUserData, (newData) => {
+
 	if (newData && newData.id) {
 		Object.assign(updatedUser, newData);
 	}
 });
 
 // バリデーション（useValidation を使用）
-const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(updatedUser.value);
+const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(updatedUser);
 
 // エラーメッセージ
 const responseMessage = ref("");
@@ -108,13 +115,13 @@ const confirmChanges = async () => {
 		return;
 	}
 	isConfirming.value = true;
-	isShow.value = false;
 };
 
 // 更新リクエストを送信
 const updateUser = async () => {
 	// `updatedUser.value` の `id` をチェック
-	if (!updatedUser.value || !updatedUser.value.id) {
+	console.log("受け取った props.editUserData:", updatedUser);
+	if (!updatedUser || !updatedUser.id) {
 		alert("更新できません: ユーザー情報が正しく取得されていません。");
 		return;
 	}
@@ -128,7 +135,7 @@ const updateUser = async () => {
 
 	try {
 		// API に PUT リクエストを送信
-		await axios.put(`${props.apiUrl}${props.usersCrudUrl}/${updatedUser.value.id}`, updatedUser.value);
+		await axios.put(`${props.apiUrl}${props.usersCrudUrl}/${updatedUser.id}`, updatedUser);
 		alert("ユーザー情報が更新されました！");
 
 		// フォームデータをリセット（空データをセット）
@@ -140,6 +147,7 @@ const updateUser = async () => {
 		// 親コンポーネントへ更新成功を通知
 		emit("update-success");
 	} catch (error) {
+		isConfirming.value = false;
 		console.error("更新に失敗しました", error);
 		alert("更新に失敗しました");
 	}
