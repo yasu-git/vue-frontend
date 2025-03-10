@@ -14,6 +14,7 @@
 		</div>
 
 		<FormUpdateComponent
+			v-if="editFormShow"
 			:edit-user-data="selectedUser"
 			:api-url="apiUrl"
 			:users-crud-url="usersCrudUrl"
@@ -55,34 +56,28 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import FormUpdateComponent from "./FormUpdateComponent.vue";
+import { useLoading, apiUrl, usersCrudUrl, useFormActions } from "@/composables/useCommon";
+
 
 // 変数の宣言
 const message = "User List"; // タイトルメッセージ
 const users = ref([]); // ユーザーリスト（リアクティブな配列）
-const isLoading = ref(false); // ローディング状態を管理
 const errorMessage = ref(""); // エラーメッセージを管理
-const editFormShow = ref(false);
-const selectedUser = ref(null);
 
-// API のエンドポイントを設定（環境変数を利用）
-/* global process */
-const apiUrl = process.env.VUE_APP_API_URL || "http://localhost:3000";
-const usersCrudUrl = process.env.VUE_APP_USER_CRUD_URL;
-
+const { isLoading, startLoading, stopLoading} = useLoading();
+const { editFormShow,selectedUser, showEditForm, hideEditForm, cancelEdit} = useFormActions();
+selectedUser.value = {}; // ✅ 初期値を `{}` にする
 /**
  * ユーザー情報を取得する関数
  * - API からユーザーリストを取得
  */
 const fetchUsers = async () => {
-	isLoading.value = true; // ローディング開始
+	startLoading();
 	errorMessage.value = ""; // エラーメッセージをリセット
 
 	try {
 		// API からデータを取得
 		const response = await axios.get(`${apiUrl}${usersCrudUrl}`);
-		if (response.status !== 200) {
-			throw new Error("APIリクエスト失敗");
-		}
 
 		// 取得したデータを `users` に格納
 		users.value = response.data.map(user => ({
@@ -96,9 +91,9 @@ const fetchUsers = async () => {
 		console.log("取得したユーザーデータ", users.value);
 	} catch (error) {
 		console.error("データの取得に失敗しました", error);
-		errorMessage.value = "データの取得に失敗しました";
+		errorMessage.value = error.response?.data?.message || "データの取得に失敗しました";
 	} finally {
-		isLoading.value = false; // ローディング終了
+		stopLoading(); // ローディング終了
 	}
 };
 
@@ -138,19 +133,19 @@ const deleteUser = async (id) => {
  */
 // ユーザーを編集
 const editUser = (user) => {
+	if (!user || !user.id) {
+        console.error("編集するユーザー情報が無効です:", user);
+        return;
+    }
 	selectedUser.value = { ...user };
-	editFormShow.value = true;
+	// console.log("🛠 選択したユーザー:", selectedUser.value); // デバッグログ
+	showEditForm();
 };
 
 // 更新成功時の処理
 const handleUpdateSuccess = async () => {
-	editFormShow.value = false;
+	hideEditForm();
 	await fetchUsers();
-};
-
-// 編集キャンセル
-const cancelEdit = () => {
-	editFormShow.value = false;
 };
 
 // `fetchUsers` を外部 (`App.vue`) から呼び出せるようにする

@@ -1,6 +1,9 @@
 <template>
 	<div v-if="editUserData" class="update-form">
 		<h3>ユーザー情報を編集</h3>
+		<div v-if="responseMessage">
+			{{ responseMessage }}
+		</div>
 		<div v-if="!isConfirming">
 
 			<!-- 入力フォーム -->
@@ -10,7 +13,7 @@
 			label="名前:"
 			:validation="$v.name"
 			:input-ref="nameInput"
-			@clear-response-message="clearResponseMessage"
+			@clear-response-message="clearResponseMessage(responseMessage)"
 			/>
 			<ValidatedInput
 			id="email"
@@ -18,7 +21,7 @@
 			label="メールアドレス:"
 			:validation="$v.email"
 			:input-ref="emailInput"
-			@clear-response-message="clearResponseMessage"
+			@clear-response-message="clearResponseMessage(responseMessage)"
 			/>
 			<ValidatedInput
 			id="tel"
@@ -26,7 +29,7 @@
 			label="tel:"
 			:validation="$v.tel"
 			:input-ref="telInput"
-			@clear-response-message="clearResponseMessage"
+			@clear-response-message="clearResponseMessage(responseMessage)"
 			/>
 			<!-- 確認ボタン -->
 			<button @click="confirmChanges">確認</button>
@@ -54,6 +57,7 @@ import { ref, reactive, watch } from "vue";
 import axios from "axios";
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from "./ValidatedInput.vue";
+import {useResponseMessage } from "@/composables/useCommon";
 
 // 親コンポーネントから受け取るデータ
 const props = defineProps({
@@ -84,51 +88,55 @@ const updatedUser = reactive({
 	tel: ""
 });
 
-/**
- * **入力時にエラーメッセージをリセット**
- */
-function clearResponseMessage() {
-	responseMessage.value = ''; // エラーメッセージをクリア
-}
-
 // `editUserData` の変更を監視し、`updatedUser` を更新
 watch(() => props.editUserData, (newData) => {
+	console.log("🚀 更新データを取得:", newData); // 確認用ログ
 
 	if (newData && newData.id) {
-		Object.assign(updatedUser, newData);
+		Object.assign(updatedUser,newData);
+		console.log("✅ updatedUser にセット:", updatedUser);
 	}
-});
+}, { immediate: true }); // ✅ 変更がなくても初回実行する
+
 
 // バリデーション（useValidation を使用）
 const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(updatedUser);
 
 // エラーメッセージ
-const responseMessage = ref("");
+const {responseMessage, clearResponseMessage, setResponseMessage } = useResponseMessage();
+
 const isConfirming = ref(false);
 
 // 変更内容を確認
 const confirmChanges = async () => {
 	$v.value.$touch(); // ✅ バリデーションを適用
 	if ($v.value.$invalid) {
-		responseMessage.value = 'フォームにエラーがあります。';
+		setResponseMessage('フォームにエラーがあります。');
 		await handleValidationErrors();
 		return;
 	}
+
+	if (JSON.stringify(props.editUserData) === JSON.stringify(updatedUser)) {
+		setResponseMessage("変更がありません。");
+		console.log("⚠️ ユーザー情報に変更がありません。");
+		return;
+	}
+
 	isConfirming.value = true;
 };
 
 // 更新リクエストを送信
 const updateUser = async () => {
 	// `updatedUser.value` の `id` をチェック
-	console.log("受け取った props.editUserData:", updatedUser);
 	if (!updatedUser || !updatedUser.id) {
+		console.log("更新できません :updatedUserにIDがありません",updatedUser);
 		alert("更新できません: ユーザー情報が正しく取得されていません。");
 		return;
 	}
 
 	$v.value.$touch();
 	if ($v.value.$invalid) {
-		responseMessage.value = 'フォームにエラーがあります。';
+		setResponseMessage('フォームにエラーがあります。');
 		await handleValidationErrors();
 		return;
 	}
@@ -139,7 +147,11 @@ const updateUser = async () => {
 		alert("ユーザー情報が更新されました！");
 
 		// フォームデータをリセット（空データをセット）
-		updatedUser.value = { id: "", name: "", email: "", tel: "" };
+		// フォームデータをリセット
+		updatedUser.id = "";
+		updatedUser.name = "";
+		updatedUser.email = "";
+		updatedUser.tel = "";
 
 		// 確認モードをリセット
 		isConfirming.value = false;

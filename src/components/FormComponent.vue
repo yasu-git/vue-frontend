@@ -1,19 +1,9 @@
 <script setup>
-import { ref, reactive, computed, nextTick } from 'vue';
+import { reactive, nextTick } from 'vue';
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from './ValidatedInput.vue';
-import { fetchAPI } from '@/composables/unit';
-
-// 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
-const emit = defineEmits(['user-added']);
-
-// UI の状態を管理するための `ref`
-const responseMessage = ref(''); // フォーム送信結果のメッセージ
-const isLoading = ref(false); // API リクエスト中かどうかを管理
-
-/* global process */
-const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:3000';
-const usersCrudUrl = process.env.VUE_APP_USER_CRUD_URL;
+import { fetchAPI} from '@/composables/useApi';
+import { useLoading, useResponseMessage , apiUrl, usersCrudUrl} from "@/composables/useCommon";
 
 // `reactive` を使用してフォームデータを管理
 const formData = reactive({
@@ -22,19 +12,18 @@ const formData = reactive({
 	tel: ''
 });
 
-// ボタンの表示メッセージ（送信中は `Loading...` を表示）
-const nowLoading = computed(() => (isLoading.value ? 'Loading...' : 'Submit'));
+
+// 親コンポーネントにユーザーが追加されたことを通知するためのイベントを定義
+const emit = defineEmits(['user-added']);
+
+//ローディング状態の管理
+const { isLoading, nowLoading, startLoading, stopLoading } = useLoading();
+
+// エラーメッセージ管理
+const { responseMessage, clearResponseMessage, setResponseMessage } = useResponseMessage();
 
 // バリデーション（useValidation を使用）
 const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData);
-
-/**
- * **入力時にエラーメッセージをリセット**
- */
-function clearResponseMessage() {
-	responseMessage.value = ''; // エラーメッセージをクリア
-}
-
 
 /**
  * フォームのリセット処理
@@ -45,7 +34,7 @@ function clearResponseMessage() {
 function resetForm() {
 	Object.assign(formData, { name: '', email: '', tel: '' });
 	$v.value.$reset();
-	responseMessage.value = ''; // メッセージをリセット
+	setResponseMessage(''); // メッセージをリセット
 }
 
 /**
@@ -58,20 +47,20 @@ async function submitForm() {
 	// バリデーション実行
 	$v.value.$touch();
 	if ($v.value.$invalid) {
-		responseMessage.value = 'フォームにエラーがあります。';
+		setResponseMessage('フォームにエラーがあります。');
 		await handleValidationErrors(); // エラーのある入力欄にフォーカスを当てる
 		return;
 	}
 
-	isLoading.value = true;
-	responseMessage.value = '';
+	startLoading();
+	clearResponseMessage();
 
 	try {
 		// API へフォームデータを送信
 		await fetchAPI(`${apiUrl}${usersCrudUrl}`, 'POST', formData);
 
 		// 成功時の処理
-		responseMessage.value = 'ユーザーが登録されました！';
+		setResponseMessage('ユーザーが登録されました！');
 		console.log('登録成功');
 
 		// 親コンポーネントへユーザー追加のイベントを発火
@@ -85,10 +74,10 @@ async function submitForm() {
 		}
 	} catch (error) {
 		console.error('送信エラー:', error);
-		responseMessage.value = 'エラーが発生しました。';
+		setResponseMessage('エラーが発生しました。');
 	} finally {
 		console.log('APIリクエスト終了');
-		isLoading.value = false; // ローディング状態を解除
+		stopLoading();
 	}
 }
 </script>

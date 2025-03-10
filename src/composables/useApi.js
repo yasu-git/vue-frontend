@@ -1,3 +1,8 @@
+
+
+
+
+
 export async function fetchAPI(url, method = 'GET', data = null) {
 	const options = {
 		method,
