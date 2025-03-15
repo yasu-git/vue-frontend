@@ -88,3 +88,22 @@ export function useFormActions() {
         cancelEdit
     };
 }
+
+export function useResetForm() {
+	return function resetForm(formData,$v = null, responseMessage = null) {
+		// フォームデータのすべてのキーを空文字にリセット
+		Object.keys(formData).forEach(key => {
+			formData[key] = '';
+		});
+
+		// バリデーションが渡されている場合はリセット
+		if ($v) {
+			$v.value.$reset();
+		}
+
+		// エラーメッセージが渡されている場合はリセット
+		if (responseMessage) {
+			responseMessage.value='';
+		}
+	};
+}

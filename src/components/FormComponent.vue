@@ -3,7 +3,7 @@ import { reactive, nextTick } from 'vue';
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from './ValidatedInput.vue';
 import { fetchAPI} from '@/composables/useApi';
-import { useLoading, useResponseMessage , apiUrl, usersCrudUrl} from "@/composables/useCommon";
+import { useLoading, useResponseMessage , apiUrl, usersCrudUrl ,useResetForm} from "@/composables/useCommon";
 import { userRules } from '@/composables/useValidationRules';
 
 // `reactive` を使用してフォームデータを管理
@@ -26,17 +26,8 @@ const { responseMessage, clearResponseMessage, setResponseMessage } = useRespons
 // バリデーション（useValidation を使用）
 const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData, userRules);
 
-/**
- * フォームのリセット処理
- * - フォームデータを初期化
- * - バリデーションのリセット
- * - メッセージのクリア
- */
-function resetForm() {
-	Object.assign(formData, { name: '', email: '', tel: '' });
-	$v.value.$reset();
-	setResponseMessage(''); // メッセージをリセット
-}
+// **リセット用の関数を取得**
+const resetForm = useResetForm();
 
 /**
  * フォーム送信処理
@@ -68,7 +59,7 @@ async function submitForm() {
 		emit('user-added');
 
 		// フォームをリセット
-		resetForm();
+		resetForm(formData, $v, responseMessage);
 		await nextTick();
 		if (nameInput.value) {
 			nameInput.value.focus();

@@ -57,7 +57,7 @@ import { ref, reactive, watch } from "vue";
 import axios from "axios";
 import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from "./ValidatedInput.vue";
-import {useResponseMessage } from "@/composables/useCommon";
+import {useResetForm, useResponseMessage } from "@/composables/useCommon";
 
 // 親コンポーネントから受け取るデータ
 const props = defineProps({
@@ -88,6 +88,7 @@ const updatedUser = reactive({
 	tel: ""
 });
 
+const resetForm = useResetForm();
 // `editUserData` の変更を監視し、`updatedUser` を更新
 watch(() => props.editUserData, (newData) => {
 	console.log("🚀 更新データを取得:", newData); // 確認用ログ
@@ -148,11 +149,7 @@ const updateUser = async () => {
 
 		// フォームデータをリセット（空データをセット）
 		// フォームデータをリセット
-		updatedUser.id = "";
-		updatedUser.name = "";
-		updatedUser.email = "";
-		updatedUser.tel = "";
-
+		resetForm(updateUser)
 		// 確認モードをリセット
 		isConfirming.value = false;
 
