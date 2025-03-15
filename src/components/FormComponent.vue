@@ -4,6 +4,7 @@ import { useValidation } from '@/composables/useValidation';
 import ValidatedInput from './ValidatedInput.vue';
 import { fetchAPI} from '@/composables/useApi';
 import { useLoading, useResponseMessage , apiUrl, usersCrudUrl} from "@/composables/useCommon";
+import { userRules } from '@/composables/useValidationRules';
 
 // `reactive` を使用してフォームデータを管理
 const formData = reactive({
@@ -23,7 +24,7 @@ const { isLoading, nowLoading, startLoading, stopLoading } = useLoading();
 const { responseMessage, clearResponseMessage, setResponseMessage } = useResponseMessage();
 
 // バリデーション（useValidation を使用）
-const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData);
+const { $v, nameInput, emailInput, telInput, handleValidationErrors } = useValidation(formData, userRules);
 
 /**
  * フォームのリセット処理
