@@ -90,11 +90,10 @@ export function useFormActions() {
 }
 
 export function useResetForm() {
-	return function resetForm(formData,$v = null, responseMessage = null) {
+
+	return function resetForm(obj,$v = null, responseMessage = null) {
 		// フォームデータのすべてのキーを空文字にリセット
-		Object.keys(formData).forEach(key => {
-			formData[key] = '';
-		});
+		clearObject(obj)
 
 		// バリデーションが渡されている場合はリセット
 		if ($v) {
@@ -106,4 +105,10 @@ export function useResetForm() {
 			responseMessage.value='';
 		}
 	};
+}
+
+export function clearObject(obj, value = '') {
+	Object.keys(obj).forEach(key => {
+		obj[key] = value;
+	});
 }
